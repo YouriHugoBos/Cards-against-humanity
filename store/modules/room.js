@@ -31,18 +31,15 @@ const mutations = {
     const key = ref.key
     const newRoom = {
       id: key,
-      name: `${room.player}'s room`,
-      players: [room.player],
-      max: 6
+      name: room.name,
+      players: [],
+      max: room.max
     }
     ref.set(newRoom)
+    server.ref('/users/' + room.player + '/roomId/').push(({roomId : newRoom.id}))
   }
 }
 const actions = {
-  joinRoom ({ commit }, payload) {
-    console.log('player: ' + payload.player + ' is joining room ' + payload.room)
-    commit('UPDATE_ROOMS', payload)
-  },
   loadRooms ({ commit }) {
     commit('GET_ROOMS')
   },

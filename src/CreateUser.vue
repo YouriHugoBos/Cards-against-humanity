@@ -31,7 +31,7 @@ export default {
         ]),
         createUsername() {
             this.$store.dispatch('insertUsername', this.user.username)
-            this.$router.push({name : 'lobby', params : { username : this.user.username }})
+            this.$router.push({name : 'lobby'})
         }
     }
 }

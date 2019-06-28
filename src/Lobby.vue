@@ -32,7 +32,7 @@ export default {
   },
   methods : {
     hostRoom() {
-      this.$store.dispatch('createRoom' , {player: this.username})
+      this.$router.push({name: 'host'})
     },
     loadRooms() {
       this.$store.dispatch('getRooms')
@@ -40,14 +40,13 @@ export default {
     joinRoom(room) {
       //todo refactor
       let user = this.$store.getters.getUsername;
-      let playload = {player: user, room: room }
+      let playload = {username: user, roomId: room.id }
       console.log(room);
-      this.$store.dispatch('joinRoom', playload)
+      this.$store.dispatch('userJoinRoom', playload)
     }
   },
   created() {
     this.loadRooms();
-    this.$store.getters.getUsername;
   }
 }
 </script>

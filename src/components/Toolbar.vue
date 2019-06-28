@@ -2,7 +2,7 @@
   <v-card color="#FAFAFA" light >
       <v-layout row child-flex wrap>
         <div>
-          <v-toolbar>
+          <v-toolbar> 
             <v-toolbar-title>Cards against</v-toolbar-title>
           </v-toolbar>
         </div>

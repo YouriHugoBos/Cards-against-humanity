@@ -2,6 +2,8 @@ import Vue from 'vue'
 import Router from 'vue-router'
 import CreateUser from './CreateUser.vue'
 import Lobby from './Lobby.vue'
+import HostRoom from './components/HostRoom.vue'
+import RoomLobby from './components/RoomLobby.vue'
 
 Vue.use(Router)
 
@@ -22,6 +24,16 @@ export default new Router({
       // this generates a separate chunk (about.[hash].js) for this route
       // which is lazy-loaded when the route is visited.
       component: Lobby
+    },
+    {
+      path: '/host',
+      name: 'host',
+      component: HostRoom
+    },
+    {
+      path: '/roomLobby',
+      name: 'roomLobby',
+      component: RoomLobby
     }
   ]
 })
