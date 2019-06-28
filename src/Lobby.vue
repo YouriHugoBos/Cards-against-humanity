@@ -38,11 +38,11 @@ export default {
       this.$store.dispatch('getRooms')
     },
     joinRoom(room) {
-      //todo refactor
       let user = this.$store.getters.getUsername;
       let playload = {username: user, roomId: room.id }
-      console.log(room);
+      console.log('room id joining: ' + room.id)
       this.$store.dispatch('userJoinRoom', playload)
+      this.$router.push({name: 'roomLobby', params: {name : room.name, id: room.id}})
     }
   },
   created() {

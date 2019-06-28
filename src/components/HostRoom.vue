@@ -46,16 +46,15 @@ export default {
                 v => (v && v.length <= 15) || 'Name must be less than 10 characters'
             ],
             maxPlayers : undefined,
-        }
+            username : this.$store.getters.getUsername,
+        } 
     },
-    methods : {
+    methods : { 
         hostRoom() {
-            this.$store.dispatch('createRoom' , {name : this.name, player: this.name, max : this.maxPlayers})
-            this.$router.push('roomLobby')
+            this.$store.dispatch('createRoom' , {name : this.name, player: this.username, max : this.maxPlayers}).then(() => {
+                this.$router.push({name: 'roomLobby', params: {id : this.name}, props: {roomId : this.playerRoomId}})
+            })
         }
     },
-    computed : {
-        
-    }
 }
 </script>

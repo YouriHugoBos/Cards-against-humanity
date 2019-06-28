@@ -31,8 +31,9 @@ export default new Router({
       component: HostRoom
     },
     {
-      path: '/roomLobby',
+      path: '/roomLobby/:name',
       name: 'roomLobby',
+      props: true,
       component: RoomLobby
     }
   ]

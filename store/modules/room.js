@@ -6,12 +6,16 @@ const state = {
     players: [],
     id: '',
     max: 6
-  }
+  },
+  players: []
 }
 
 const getters = {
   getRooms: state => {
     return state.rooms
+  },
+  getPlayers: state => {
+    return state.players
   },
   isRoomFull: state => (id) => {
     for (let item in state.room) {
@@ -26,6 +30,10 @@ const mutations = {
   'GET_ROOMS' (state, rooms) {
     state.rooms = rooms
   },
+  'RETURN_PLAYERS' (state, players) {
+    state.players = players
+    return players
+  },
   'CREATE_ROOM' (state, room) {
     const ref = server.ref('rooms/').push()
     const key = ref.key
@@ -36,7 +44,8 @@ const mutations = {
       max: room.max
     }
     ref.set(newRoom)
-    server.ref('/users/' + room.player + '/roomId/').push(({roomId : newRoom.id}))
+    server.ref('/rooms/' + newRoom.id + '/players/').push(room.player)
+    server.ref('/users/' + room.player).push(newRoom.id)
   }
 }
 const actions = {
@@ -49,8 +58,13 @@ const actions = {
   },
   getRooms ({ commit }) {
     server.ref('rooms/').on('value', (snapshot) => {
-      console.log(snapshot.val())
       commit('GET_ROOMS', snapshot.val())
+    })
+  },
+  getPlayersInRoom ({ commit }, roomId) {
+    server.ref('rooms/' + roomId +'/players').on('value', (snapshot) => {
+      console.log(snapshot.val())
+      commit('RETURN_PLAYERS', snapshot.val())
     })
   }
 }
