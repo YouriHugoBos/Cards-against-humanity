@@ -10,7 +10,7 @@
                 ></v-text-field>
             </v-container>
         </v-form>
-        <v-btn @click="createUsername" color="secondary"> Confirm! </v-btn>
+        <v-btn :disabled="user.username.length < 1" @click="createUsername" color="secondary"> Confirm! </v-btn>
     </div>
 </template>
 
@@ -26,12 +26,9 @@ export default {
         }
     },
     methods: {
-        ...mapActions([
-            'insertUsername'
-        ]),
         createUsername() {
-            this.$store.dispatch('insertUsername', this.user.username)
-            this.$router.push({name : 'lobby'})
+            this.$store.dispatch('createUser', this.user.username)
+            this.$router.push('/lobby')
         }
     }
 }

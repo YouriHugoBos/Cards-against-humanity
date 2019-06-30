@@ -1,45 +1,71 @@
 import server from '../server.js'
+import router from '../../src/router.js'
 
 const state = {
-  username: '',
-  roomId: ''
+  user : {
+    username: '',
+    id: '',
+    roomId: '',
+  }
 }
 
 const getters = {
   getUsername: state => {
-    return state.username || localStorage.getItem('username')
+    return state.user.username
   },
   getUserRoom: state => {
-    return state.roomId || localStorage.getItem('roomId')
+    return state.user.roomId || localStorage.getItem('roomId')
+  },
+  getPlayerWhiteCards : state => {
+    return state.user.whiteCards
   }
 }
 
 const mutations = {
-  'UPDATE_USERNAME' (state, username) {
-    console.log('updating username state : ' + username)
-    localStorage.setItem('username', username)
-    state.username = username
-    server.ref('users/').set({ name: username, roomId: null })
+  'INIT_USER' (state, user) {
+    state.user = user
   },
-  'JOIN_ROOM' (state, payload) {
-    console.log(payload.username + 'is joining room : ' + payload.roomId)
-    state.roomId = payload.roomId
-    server.ref('rooms/' + payload.roomId + '/players').push(payload.username)
-    server.ref('/users/' + payload.username + '/roomId/').set(payload.roomId)
-  }
 }
 
 const actions = {
-  getUsername ({ commit }) {
-    commit('UPDATE_USERNAME', localStorage.getItem('username'))
+  createUser ({ commit }, username) {
+    const ref = server.ref('users/').push()
+    const key = ref.key
+    const user = {
+      id: key,
+      username
+    }
+    localStorage.setItem('userId', user.id)
+    state.user = user
+    ref.set({username: user.username, id: user.id})
+
+    commit('INIT_USER', user)
   },
-  insertUsername ({ commit }, username) {
-    console.log('inserting user to local storage and database : ' + username)
-    commit('UPDATE_USERNAME', username)
+  fetchUser ({ state, commit }) {
+    const userId = localStorage.getItem('userId')
+    if (!userId) {
+      console.error('User does not exist')
+      router.push('/');
+      return;
+    }
+    server.ref(`/users/${userId}`).once('value', (snapshot) => {
+      const user = snapshot.val()
+      console.log(user.roomId);
+      commit('INIT_USER', user)
+      if( user != null ) {
+        user.roomId ? router.push(`/room/${user.roomId}`) : router.push('/lobby')
+        return;
+      }
+    })
   },
-  userJoinRoom ({ commit }, payload) {
-    console.log('inserting user to room : ' + payload)
-    commit('JOIN_ROOM', payload)
+  userJoinRoom ({ state, commit }, room) {
+    server.ref('rooms/' + room.id + '/players').push(state.user)
+    server.ref('/users/' + state.user.id).update({roomId : room.id})
+    router.push(`/room/${room.id}`)
+
+    commit('INIT_USER', {...state.user, roomId: room.id})
+
+    return Promise.resolve();
   }
 }
 

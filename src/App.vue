@@ -16,11 +16,15 @@
 </template>
 <script>
   import Toolbar from '@/components/Toolbar.vue'
-export default {
-  components: {
-    appToolbar: Toolbar
-  },
-}
+
+  export default {
+    components: {
+      appToolbar: Toolbar
+    },
+    mounted() {
+      this.$store.dispatch('fetchUser');
+    }
+  }
 </script>
 
 <style>

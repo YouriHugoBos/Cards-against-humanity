@@ -51,9 +51,7 @@ export default {
     },
     methods : { 
         hostRoom() {
-            this.$store.dispatch('createRoom' , {name : this.name, player: this.username, max : this.maxPlayers}).then(() => {
-                this.$router.push({name: 'roomLobby', params: {id : this.name}, props: {roomId : this.playerRoomId}})
-            })
+            this.$store.dispatch('createRoom' , {name : this.name, player: this.username, max : this.maxPlayers});
         }
     },
 }

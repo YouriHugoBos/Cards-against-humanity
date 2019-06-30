@@ -1,29 +1,26 @@
 <template>
   <div>
-    <h1>Room name: {{name}}</h1>
+    <h1>Room name: {{room.name}}</h1>
     <hr>
     <h3>Current players:</h3>
     <v-container grid-list-xs>
         <v-layout wrap>
-          <v-flex :key="player.name" v-for="player in players" xs6>
+          <v-flex :key="player.id" v-for="player in room.players" xs6>
             <v-sheet
               class="d-flex"
               :class="colors[Math.floor(Math.random() * colors.length)]"
               height="50"
             >
-              <sheet-footer>
-                {{player}}
-              </sheet-footer>
+            {{ player.username }}
             </v-sheet>
           </v-flex>
         </v-layout>
+        <v-btn color="secondary" @click="startGame">Start game!</v-btn>
     </v-container>
-    <p >{{player}}</p>
   </div>
 </template>
 <script>
 export default {
-    props: ['id', 'name'],
     data() {
         return {
           roomId : this.id,
@@ -41,14 +38,21 @@ export default {
       loadPlayers() {
         this.$store.dispatch('getPlayersInRoom', this.roomId)
       },
+      startGame() {
+        this.$store.dispatch('startGame');
+      },
     },
     computed : {
       players() {
         return this.$store.getters.getPlayers;
-      }
+      },
+      room() {
+        return this.$store.getters.getRoom;
+      },
     },
-    created() {
-      this.loadPlayers()
+    mounted() {
+      const roomId = this.$route.params.id;
+      this.$store.dispatch('fetchRoom', roomId);
     }
 }
 </script>

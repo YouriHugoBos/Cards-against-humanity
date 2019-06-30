@@ -11,7 +11,7 @@
           <v-layout row wrap>
             <v-flex xs4 :key="room.id" v-for="room in rooms">
               <v-card @click="joinRoom(room)" style="cursor: pointer" dark >
-                <v-card-text>{{room.name}}</v-card-text>
+                <v-card-text :disabled="room.gameState == 'PLAYING'" >{{room.name}}</v-card-text>
               </v-card>
             </v-flex>
           </v-layout>
@@ -38,11 +38,7 @@ export default {
       this.$store.dispatch('getRooms')
     },
     joinRoom(room) {
-      let user = this.$store.getters.getUsername;
-      let playload = {username: user, roomId: room.id }
-      console.log('room id joining: ' + room.id)
-      this.$store.dispatch('userJoinRoom', playload)
-      this.$router.push({name: 'roomLobby', params: {name : room.name, id: room.id}})
+      this.$store.dispatch('userJoinRoom', room)
     }
   },
   created() {

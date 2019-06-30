@@ -4,6 +4,8 @@ import CreateUser from './CreateUser.vue'
 import Lobby from './Lobby.vue'
 import HostRoom from './components/HostRoom.vue'
 import RoomLobby from './components/RoomLobby.vue'
+import Game from './Game.vue'
+
 
 Vue.use(Router)
 
@@ -31,10 +33,14 @@ export default new Router({
       component: HostRoom
     },
     {
-      path: '/roomLobby/:name',
-      name: 'roomLobby',
-      props: true,
+      path: '/room/:id',
+      name: 'room',
       component: RoomLobby
+    },
+    {
+      path: '/game/:id',
+      name: 'game',
+      component: Game
     }
   ]
 })
