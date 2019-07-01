@@ -4,6 +4,7 @@ import router from '../../src/router.js';
 const roomStates = {
   IDLE: 'idle',
   PLAYING: 'playing',
+  VOTE: 'vote',
   FINISHED: 'finished',
 }
 
@@ -86,13 +87,26 @@ const actions = {
       commit('GET_ROOMS', snapshot.val())
     })
   },
-  fetchRoom({ commit }, roomId) {
+  fetchRoom({ rootState, dispatch, state, commit }, roomId) {
     server.ref(`/rooms/${roomId}`).on('value', (snapshot) => {
       const room = snapshot.val();
       if (room.gameState === roomStates.PLAYING && !router.currentRoute.path.includes('game')) {
         router.push(`/game/${room.id}`);
       }
-      commit('SET_ROOM', room);
+      const players = Object.keys(room.players).map((key, index) => room.players[key]);
+
+      if (room.gameState === roomStates.PLAYING && room.host === rootState.player.user.id) {
+        const submittedPlayers = players.filter((player) => player.submitted);
+        if (Object.keys(room.players).length === submittedPlayers.length) {
+          dispatch('updateRoomState', roomStates.VOTE);
+          // present white cards text
+          // vote round
+          // give points
+          // host can start new round
+        }
+      }
+
+      commit('SET_ROOM', {...room, players});
     })
   },
   getPlayersInRoom ({ commit }, roomId) {
@@ -135,7 +149,6 @@ const actions = {
     });
   },
   async drawWhiteCards({ state, commit }) {
-    // 459 cards
     const availableWhiteCards = !state.room.availableWhiteCards
       ? state.whiteCards.map((card, index) => index)
       : state.room.availableWhiteCards;
@@ -146,7 +159,7 @@ const actions = {
       
       for(let i = 0; i < 6; i++) {
         const random = Math.floor(Math.random() * availableWhiteCards.length);
-        playerWhiteCards.push(state.whiteCards[availableWhiteCards[random]]);
+        playerWhiteCards.push({id: random, text: state.whiteCards[availableWhiteCards[random]]});
         availableWhiteCards.splice(random, 1);
       }
 
@@ -155,7 +168,10 @@ const actions = {
     await server.ref(`/rooms/${state.room.id}`).update({ availableWhiteCards });
 
     return Promise.resolve();
-  }
+  },
+  submitCardToRoom({ rootState, state, commit }, card) {
+    server.ref(`/rooms/${state.room.id}/players/${rootState.player.user.id}`).update({submitted: true, card: card.text})
+  },
 }
 export default {
   state,

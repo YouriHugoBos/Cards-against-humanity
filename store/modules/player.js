@@ -13,6 +13,9 @@ const getters = {
   getUsername: state => {
     return state.user.username
   },
+  getUser : state => {
+    return state.user
+  },
   getUserRoom: state => {
     return state.user.roomId || localStorage.getItem('roomId')
   },
@@ -44,11 +47,10 @@ const actions = {
   fetchUser ({ state, commit }) {
     const userId = localStorage.getItem('userId')
     if (!userId) {
-      console.error('User does not exist')
       router.push('/');
       return;
     }
-    server.ref(`/users/${userId}`).once('value', (snapshot) => {
+    server.ref(`/users/${userId}`).on('value', (snapshot) => {
       const user = snapshot.val()
       console.log(user.roomId);
       commit('INIT_USER', user)
@@ -59,13 +61,18 @@ const actions = {
     })
   },
   userJoinRoom ({ state, commit }, room) {
-    server.ref('rooms/' + room.id + '/players').push(state.user)
+    server.ref('rooms/' + room.id + '/players').child(state.user.id).set(state.user)
     server.ref('/users/' + state.user.id).update({roomId : room.id})
     router.push(`/room/${room.id}`)
 
     commit('INIT_USER', {...state.user, roomId: room.id})
 
     return Promise.resolve();
+  },
+  submitCard ({ state, commit }, selectedCard) {
+    server.ref(`/users/${state.user.id}`).update({submitted: true})
+    const newWhiteCards = [...state.user.whiteCards].filter((card) => card.id !== selectedCard.id);
+    server.ref(`/users/${state.user.id}`).update({whiteCards: newWhiteCards});
   }
 }
 

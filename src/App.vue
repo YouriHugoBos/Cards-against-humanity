@@ -11,7 +11,13 @@
       </transition>
       </v-container> 
     </v-content>
-    <v-footer app></v-footer>
+    <v-footer app>
+      <v-fab-transition v-if="debug">
+        <v-btn color="secondary" dark absolute top right fab @click="clearDatabase">
+          <v-icon>delete</v-icon>
+        </v-btn>
+      </v-fab-transition>
+    </v-footer>
   </v-app>
 </template>
 <script>
@@ -21,8 +27,20 @@
     components: {
       appToolbar: Toolbar
     },
+    data() {
+      return {
+        debug: true,
+      };
+    },
     mounted() {
       this.$store.dispatch('fetchUser');
+    },
+    methods: {
+      clearDatabase() {
+        if (!this.debug) return;
+
+        this.$store.dispatch('clearDatabase');
+      }
     }
   }
 </script>
