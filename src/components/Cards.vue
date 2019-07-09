@@ -26,7 +26,6 @@
 
 <script>
 export default {
-  props: ['cards'],
   data() {
     return {
       selected : undefined,
@@ -36,7 +35,14 @@ export default {
   computed : {
     user() {
       return this.$store.getters.getUser
-    }
+    },
+    cards() {
+      const cards = this.$store.getters.getPlayerWhiteCards
+      console.log(cards);
+      if(cards){
+        return cards
+      }
+    },
   },
   methods : {
     selectCard(card, i) {
@@ -52,7 +58,6 @@ export default {
       this.selected = undefined;
       this.$store.dispatch('submitCard', this.currentCard)
       this.$store.dispatch('submitCardToRoom', this.currentCard)
-      console.log(this.currentCard)
     }
   }
 }

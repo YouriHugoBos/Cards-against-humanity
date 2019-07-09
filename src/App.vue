@@ -34,6 +34,8 @@
     },
     mounted() {
       this.$store.dispatch('fetchUser');
+      this.$store.dispatch('fetchWhiteCards');
+      this.$store.dispatch('fetchBlackCards');
     },
     methods: {
       clearDatabase() {

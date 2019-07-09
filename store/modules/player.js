@@ -20,8 +20,8 @@ const getters = {
     return state.user.roomId || localStorage.getItem('roomId')
   },
   getPlayerWhiteCards : state => {
-    return state.user.whiteCards
-  }
+      return state.user.whiteCards
+  },
 }
 
 const mutations = {
@@ -73,7 +73,7 @@ const actions = {
     server.ref(`/users/${state.user.id}`).update({submitted: true})
     const newWhiteCards = [...state.user.whiteCards].filter((card) => card.id !== selectedCard.id);
     server.ref(`/users/${state.user.id}`).update({whiteCards: newWhiteCards});
-  }
+  },
 }
 
 export default {

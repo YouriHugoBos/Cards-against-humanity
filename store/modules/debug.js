@@ -13,6 +13,7 @@ const actions = {
     server.ref('/rooms').remove();
 
     localStorage.removeItem('userId');
+    router.push('/')
   }
 }
 

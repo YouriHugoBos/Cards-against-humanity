@@ -8,10 +8,10 @@
           <v-flex :key="player.id" v-for="player in room.players" xs6>
             <v-sheet
               class="d-flex"
-              :class="colors[Math.floor(Math.random() * colors.length)]"
+              color="secondary"
               height="50"
             >
-            {{ player.username }}
+            <p style="margin: auto" class="white--text text-xs-center">{{ player.username }}</p>
             </v-sheet>
           </v-flex>
         </v-layout>

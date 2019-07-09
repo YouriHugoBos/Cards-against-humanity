@@ -4,7 +4,8 @@
       <div class="body-2"> The question is: </div>
       <p class="headline font-weight-light font-italic">"{{blackCard}}"</p>
       <app-submitted-view></app-submitted-view>
-      <app-cards :cards="whiteCards"></app-cards>
+      <app-cards v-if="roomState == 'playing'"></app-cards>
+      <p class="pa-4 title text-xs-center" v-else> Vote for the best response</p>
   </div>
 </template> 
 <script>
@@ -27,9 +28,9 @@ export default {
         blackCard() {
             return this.$store.getters.getBlackCard
         },
-        whiteCards() {
-            return this.$store.getters.getPlayerWhiteCards
-        },
+        roomState() {
+            return this.$store.getters.getRoomState
+        }
     },
     components : {
         appCards : Cards,

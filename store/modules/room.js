@@ -27,8 +27,14 @@ const getters = {
   getRoom: state => {
     return state.room
   },
+  getRoomState: state => {
+    return state.room.gameState
+  },
   getPlayers: state => {
-    return state.players
+    return state.room.players
+  },
+  getVoted: state => {
+    return state.players.voted
   },
   isRoomFull: state => (id) => {
     for (let item in state.room) {
@@ -58,6 +64,9 @@ const mutations = {
   },
   'SET_BLACKCARDS' (state, blackCards) {
     state.blackCards = blackCards
+  },
+  'UPDATE_GAMESTATE' (state, gameState) {
+    state.room.gameState = gameState
   }
 }
 
@@ -76,7 +85,6 @@ const actions = {
     }
     ref.set(newRoom)
     await dispatch('userJoinRoom', newRoom);
-    console.log('set host : ' , rootState.player.user.id)
     server.ref(`/rooms/${newRoom.id}`).update({host : rootState.player.user.id})
     await dispatch('fetchRoom', newRoom.id)
     router.push(`/room/${newRoom.id}`)
@@ -90,7 +98,7 @@ const actions = {
   fetchRoom({ rootState, dispatch, state, commit }, roomId) {
     server.ref(`/rooms/${roomId}`).on('value', (snapshot) => {
       const room = snapshot.val();
-      if (room.gameState === roomStates.PLAYING && !router.currentRoute.path.includes('game')) {
+      if ((room.gameState === roomStates.PLAYING || room.gameState == roomStates.VOTE) && !router.currentRoute.path.includes('game')) {
         router.push(`/game/${room.id}`);
       }
       const players = Object.keys(room.players).map((key, index) => room.players[key]);
@@ -99,10 +107,12 @@ const actions = {
         const submittedPlayers = players.filter((player) => player.submitted);
         if (Object.keys(room.players).length === submittedPlayers.length) {
           dispatch('updateRoomState', roomStates.VOTE);
-          // present white cards text
-          // vote round
-          // give points
-          // host can start new round
+        }
+      }
+      if(room.gameState === roomStates.VOTE) {
+        const votedPlayers = players.filter((player) => player.voted);
+        if (Object.keys(room.players).length === votedPlayers.length) {
+          dispatch('startNewRound')
         }
       }
 
@@ -115,18 +125,18 @@ const actions = {
     })
   },
   async startGame({ state, dispatch, commit }) {
-    await dispatch('fetchWhiteCards');
-    await dispatch('fetchBlackCards');
+    console.log('start game: ', state.whiteCards)
     await dispatch('drawWhiteCards');
     await dispatch('drawBlackCard');
     await dispatch('updateRoomState', roomStates.PLAYING);
   },
   async updateRoomState({ state, commit }, gameState) {
     await server.ref('/rooms/' + state.room.id).update({gameState})
+    commit('UPDATE_GAMESTATE', gameState)
     return Promise.resolve();
   },
-  fetchBlackCards ({ commit }) {
-    server.ref('/blackCards/').once('value', (snapshot) => {
+  async fetchBlackCards ({ commit }) {
+    await server.ref('/blackCards/').once('value', (snapshot) => {
       commit('SET_BLACKCARDS', snapshot.val())
       return Promise.resolve();
     });
@@ -137,15 +147,16 @@ const actions = {
       : state.room.availableBlackCards;
 
     const random = Math.floor(Math.random() * availableBlackCards.length);
+    console.log('random: ', random, ' - getting card: ' ,  availableBlackCards[random])
     const currentBlackCard = state.blackCards[availableBlackCards[random]].text;
     availableBlackCards.splice(random, 1)
 
     server.ref(`/rooms/${state.room.id}`).update({ currentBlackCard, availableBlackCards });
   },
-  fetchWhiteCards ({ commit }) {
-    server.ref('/whiteCards/').once('value', (snapshot) => {
+  async fetchWhiteCards ({ commit }) {
+    const whiteCards = [];
+    return server.ref('/whiteCards/').once('value').then((snapshot) => {
       commit('SET_WHITECARDS', snapshot.val())
-      return Promise.resolve();
     });
   },
   async drawWhiteCards({ state, commit }) {
@@ -162,16 +173,68 @@ const actions = {
         playerWhiteCards.push({id: random, text: state.whiteCards[availableWhiteCards[random]]});
         availableWhiteCards.splice(random, 1);
       }
-
       await server.ref(`/users/${player.id}`).update({ whiteCards: playerWhiteCards });
     }
     await server.ref(`/rooms/${state.room.id}`).update({ availableWhiteCards });
-
     return Promise.resolve();
   },
-  submitCardToRoom({ rootState, state, commit }, card) {
+  async drawNewRoundCards ({ rootState, state }) {
+    // white card
+    const currentWhiteCards = rootState.player.user.whiteCards
+    const updatedWhiteCards = currentWhiteCards
+
+    const availableWhiteCards =  state.room.availableWhiteCards
+    const random = Math.floor(Math.random() * availableWhiteCards.length);
+
+    updatedWhiteCards.push({id: random, text: state.whiteCards[availableWhiteCards[random]]})
+    availableWhiteCards.splice(random, 1);
+
+    await server.ref(`/users/${rootState.player.user.id}`).update({ whiteCards: updatedWhiteCards});
+    await server.ref(`/rooms/${state.room.id}`).update({ availableWhiteCards });
+
+    // black card
+    const availableBlackCards = state.room.availableBlackCards
+    const blackCardRandom = Math.floor(Math.random() * availableBlackCards.length);
+    const currentBlackCard = state.blackCards[availableBlackCards[blackCardRandom]].text
+
+    availableBlackCards.splice(random, 1);
+    await server.ref(`/rooms/${state.room.id}`).update({ currentBlackCard, availableBlackCards });
+
+
+  },
+  submitCardToRoom({ rootState, state }, card) {
     server.ref(`/rooms/${state.room.id}/players/${rootState.player.user.id}`).update({submitted: true, card: card.text})
   },
+  async votePlayer ({ rootState, state }, payload) {
+    const votedPlayer = payload.id
+    let currentPlayerScore = 0
+    state.room.players.filter((player) => {
+      if(player.id == votedPlayer) {
+        if('score' in player ) {
+          currentPlayerScore = player.score
+        }
+      }
+    });
+    const newPlayerScore = currentPlayerScore += 1
+    server.ref(`/rooms/${state.room.id}/players/${votedPlayer}`).update({score : newPlayerScore})
+    server.ref(`/rooms/${state.room.id}/players/${rootState.player.user.id}`).update({voted: true})
+  },
+  resetRound ({ rootState, state, dispatch }) {
+    state.room.players.filter((player) => {
+      server.ref(`/rooms/${state.room.id}/players/${player.id}`).update({voted: false, submitted: false});
+      server.ref(`/rooms/${state.room.id}/players/${player.id}/card`).remove();
+    })
+    console.log('rootstate user: ' + rootState.player.user)
+    state.room.players.filter((user) => {
+      server.ref(`/users/${user.id}`).update({submitted: false})
+    });
+    server.ref(`/rooms/${state.room.id}/currentBlackCard`).remove();
+  },
+  async startNewRound ({ dispatch }){
+    await dispatch('resetRound')
+    await dispatch('updateRoomState', roomStates.PLAYING);
+    await dispatch('drawNewRoundCards')
+  }
 }
 export default {
   state,
